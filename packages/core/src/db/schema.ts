@@ -11,6 +11,7 @@ import {
   uniqueIndex,
   index,
   check,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -168,7 +169,9 @@ export const chats = pgTable(
       .notNull()
       .references(() => groups.id, { onDelete: 'cascade' }),
     type: chatTypeEnum('type').notNull(),
-    pairedChatId: uuid('paired_chat_id'),
+    pairedChatId: uuid('paired_chat_id').references((): AnyPgColumn => chats.id, {
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index('chats_group_id_idx').on(table.groupId)],
@@ -186,7 +189,9 @@ export const messages = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     ciphertext: text('ciphertext').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    parentMessageId: uuid('parent_message_id'),
+    parentMessageId: uuid('parent_message_id').references((): AnyPgColumn => messages.id, {
+      onDelete: 'set null',
+    }),
   },
   (table) => [
     index('messages_chat_id_idx').on(table.chatId),
