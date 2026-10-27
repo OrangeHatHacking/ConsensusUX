@@ -100,6 +100,31 @@ describe('calculateProposalScore', () => {
     const score = calculateProposalScore([], 3);
     expect(score.chainDepth).toBe(3);
   });
+
+  it('rejects binary judgment with value other than 0 or 1', () => {
+    const judgments = [makeJudgment({ type: 'binary', value: 5 })];
+    expect(() => calculateProposalScore(judgments)).toThrow(RangeError);
+  });
+
+  it('rejects degrees judgment with value 0', () => {
+    const judgments = [makeJudgment({ type: 'degrees', value: 0 })];
+    expect(() => calculateProposalScore(judgments)).toThrow(RangeError);
+  });
+
+  it('rejects degrees judgment with value 11', () => {
+    const judgments = [makeJudgment({ type: 'degrees', value: 11 })];
+    expect(() => calculateProposalScore(judgments)).toThrow(RangeError);
+  });
+
+  it('rejects degrees judgment with non-integer value', () => {
+    const judgments = [makeJudgment({ type: 'degrees', value: 3.5 })];
+    expect(() => calculateProposalScore(judgments)).toThrow(RangeError);
+  });
+
+  it('rejects negative judgment value', () => {
+    const judgments = [makeJudgment({ type: 'degrees', value: -1 })];
+    expect(() => calculateProposalScore(judgments)).toThrow(RangeError);
+  });
 });
 
 describe('getProposalSection', () => {

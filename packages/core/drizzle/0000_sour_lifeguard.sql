@@ -28,7 +28,8 @@ CREATE TABLE "federation_relationships" (
 	"group_a_id" uuid NOT NULL,
 	"group_b_id" uuid NOT NULL,
 	"status" "federation_status" DEFAULT 'connected' NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "federation_groups_ordered" CHECK ("federation_relationships"."group_a_id" < "federation_relationships"."group_b_id")
 );
 --> statement-breakpoint
 CREATE TABLE "group_members" (
@@ -37,7 +38,8 @@ CREATE TABLE "group_members" (
 	"tier" "member_tier" DEFAULT 'probationary' NOT NULL,
 	"joined_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"probation_ends_at" timestamp with time zone,
-	"removed_at" timestamp with time zone
+	"removed_at" timestamp with time zone,
+	CONSTRAINT "group_members_user_id_group_id_pk" PRIMARY KEY("user_id","group_id")
 );
 --> statement-breakpoint
 CREATE TABLE "group_profiles" (
@@ -63,7 +65,8 @@ CREATE TABLE "judgments" (
 	"type" "judgment_type" NOT NULL,
 	"value" integer NOT NULL,
 	"reasoning_ciphertext" text NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "judgments_value_range" CHECK ("judgments"."value" >= 0 AND "judgments"."value" <= 10)
 );
 --> statement-breakpoint
 CREATE TABLE "messages" (
@@ -77,8 +80,8 @@ CREATE TABLE "messages" (
 --> statement-breakpoint
 CREATE TABLE "proposal_scores" (
 	"message_id" uuid PRIMARY KEY NOT NULL,
-	"green_score" real DEFAULT 0 NOT NULL,
-	"red_score" real DEFAULT 0 NOT NULL,
+	"green_score" double precision DEFAULT 0 NOT NULL,
+	"red_score" double precision DEFAULT 0 NOT NULL,
 	"judgment_count" integer DEFAULT 0 NOT NULL,
 	"chain_depth" integer DEFAULT 0 NOT NULL,
 	"last_updated" timestamp with time zone DEFAULT now() NOT NULL
@@ -138,7 +141,7 @@ ALTER TABLE "chats" ADD CONSTRAINT "chats_group_id_groups_id_fk" FOREIGN KEY ("g
 ALTER TABLE "disputes" ADD CONSTRAINT "disputes_challenger_id_users_id_fk" FOREIGN KEY ("challenger_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "disputes" ADD CONSTRAINT "disputes_accused_id_users_id_fk" FOREIGN KEY ("accused_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "disputes" ADD CONSTRAINT "disputes_group_id_groups_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."groups"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "disputes" ADD CONSTRAINT "disputes_complaint_message_id_messages_id_fk" FOREIGN KEY ("complaint_message_id") REFERENCES "public"."messages"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "disputes" ADD CONSTRAINT "disputes_complaint_message_id_messages_id_fk" FOREIGN KEY ("complaint_message_id") REFERENCES "public"."messages"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "federation_relationships" ADD CONSTRAINT "federation_relationships_group_a_id_groups_id_fk" FOREIGN KEY ("group_a_id") REFERENCES "public"."groups"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "federation_relationships" ADD CONSTRAINT "federation_relationships_group_b_id_groups_id_fk" FOREIGN KEY ("group_b_id") REFERENCES "public"."groups"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "group_members" ADD CONSTRAINT "group_members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -162,7 +165,6 @@ ALTER TABLE "vouches" ADD CONSTRAINT "vouches_group_id_groups_id_fk" FOREIGN KEY
 CREATE INDEX "chats_group_id_idx" ON "chats" USING btree ("group_id");--> statement-breakpoint
 CREATE INDEX "disputes_group_id_idx" ON "disputes" USING btree ("group_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "federation_relationships_groups_idx" ON "federation_relationships" USING btree ("group_a_id","group_b_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "group_members_pk" ON "group_members" USING btree ("user_id","group_id");--> statement-breakpoint
 CREATE INDEX "group_members_group_id_idx" ON "group_members" USING btree ("group_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "group_profiles_user_group_idx" ON "group_profiles" USING btree ("user_id","group_id");--> statement-breakpoint
 CREATE INDEX "judgments_message_id_idx" ON "judgments" USING btree ("message_id");--> statement-breakpoint

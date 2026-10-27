@@ -16,23 +16,37 @@ import type { Judgment, ProposalScore } from './types';
  *   red_score >= 1.0 → red section (higher red = less visible)
  *   red_score < 1.0  → green section (higher green = more visible)
  */
+
+function validateJudgment(j: Judgment): void {
+  if (j.type === 'binary') {
+    if (j.value !== 0 && j.value !== 1) {
+      throw new RangeError(`Binary judgment value must be 0 or 1, got ${j.value}`);
+    }
+  } else {
+    if (!Number.isInteger(j.value) || j.value < 1 || j.value > 10) {
+      throw new RangeError(`Degrees judgment value must be integer 1-10, got ${j.value}`);
+    }
+  }
+}
+
 export function calculateProposalScore(
   judgments: Judgment[],
-  chainDepth: number = 0
+  chainDepth: number = 0,
 ): ProposalScore {
   let greenScore = 0;
   let redScore = 0;
 
   for (const j of judgments) {
+    validateJudgment(j);
+
     if (j.type === 'binary') {
       if (j.value === 1) greenScore += 1;
       else redScore += 1;
     } else {
-      // degrees: 1-10, symmetric linear mapping
       if (j.value <= 5) {
-        greenScore += (6 - j.value) / 5; // 1→1.0, 2→0.8, 3→0.6, 4→0.4, 5→0.2
+        greenScore += (6 - j.value) / 5;
       } else {
-        redScore += (j.value - 5) / 5; // 6→0.2, 7→0.4, 8→0.6, 9→0.8, 10→1.0
+        redScore += (j.value - 5) / 5;
       }
     }
   }
@@ -40,7 +54,7 @@ export function calculateProposalScore(
   const total = judgments.length || 1;
 
   return {
-    messageId: '', // set by caller
+    messageId: '',
     greenScore: greenScore / total,
     redScore: redScore / total,
     judgmentCount: judgments.length,
@@ -52,9 +66,7 @@ export function calculateProposalScore(
 /**
  * Determine which section a proposal belongs to in the output chat.
  */
-export function getProposalSection(
-  score: ProposalScore
-): 'green' | 'red' | 'pending' {
+export function getProposalSection(score: ProposalScore): 'green' | 'red' | 'pending' {
   if (score.judgmentCount === 0) return 'pending';
   if (score.redScore >= 1.0) return 'red';
   return 'green';

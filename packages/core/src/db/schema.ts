@@ -5,11 +5,14 @@ import {
   text,
   timestamp,
   integer,
-  real,
+  doublePrecision,
   pgEnum,
+  primaryKey,
   uniqueIndex,
   index,
+  check,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 // === Enums ===
 
@@ -63,7 +66,10 @@ export const sessions = pgTable(
     lastActiveAt: timestamp('last_active_at', { withTimezone: true }).notNull().defaultNow(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   },
-  (table) => [index('sessions_user_id_idx').on(table.userId), index('sessions_expires_at_idx').on(table.expiresAt)],
+  (table) => [
+    index('sessions_user_id_idx').on(table.userId),
+    index('sessions_expires_at_idx').on(table.expiresAt),
+  ],
 );
 
 // === Groups & Membership ===
@@ -89,9 +95,7 @@ export const groupProfiles = pgTable(
     selfVouchCiphertext: text('self_vouch_ciphertext').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    uniqueIndex('group_profiles_user_group_idx').on(table.userId, table.groupId),
-  ],
+  (table) => [uniqueIndex('group_profiles_user_group_idx').on(table.userId, table.groupId)],
 );
 
 export const groupMembers = pgTable(
@@ -109,7 +113,7 @@ export const groupMembers = pgTable(
     removedAt: timestamp('removed_at', { withTimezone: true }),
   },
   (table) => [
-    uniqueIndex('group_members_pk').on(table.userId, table.groupId),
+    primaryKey({ columns: [table.userId, table.groupId] }),
     index('group_members_group_id_idx').on(table.groupId),
   ],
 );
@@ -210,6 +214,7 @@ export const judgments = pgTable(
   (table) => [
     index('judgments_message_id_idx').on(table.messageId),
     uniqueIndex('judgments_message_judge_idx').on(table.messageId, table.judgeId),
+    check('judgments_value_range', sql`${table.value} >= 0 AND ${table.value} <= 10`),
   ],
 );
 
@@ -217,8 +222,8 @@ export const proposalScores = pgTable('proposal_scores', {
   messageId: uuid('message_id')
     .primaryKey()
     .references(() => messages.id, { onDelete: 'cascade' }),
-  greenScore: real('green_score').notNull().default(0),
-  redScore: real('red_score').notNull().default(0),
+  greenScore: doublePrecision('green_score').notNull().default(0),
+  redScore: doublePrecision('red_score').notNull().default(0),
   judgmentCount: integer('judgment_count').notNull().default(0),
   chainDepth: integer('chain_depth').notNull().default(0),
   lastUpdated: timestamp('last_updated', { withTimezone: true }).notNull().defaultNow(),
@@ -241,7 +246,7 @@ export const disputes = pgTable(
       .references(() => groups.id, { onDelete: 'cascade' }),
     complaintMessageId: uuid('complaint_message_id')
       .notNull()
-      .references(() => messages.id),
+      .references(() => messages.id, { onDelete: 'restrict' }),
     status: disputeStatusEnum('status').notNull().default('active'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
@@ -282,6 +287,10 @@ export const federationRelationships = pgTable(
   },
   (table) => [
     uniqueIndex('federation_relationships_groups_idx').on(table.groupAId, table.groupBId),
+    check(
+      'federation_groups_ordered',
+      sql`${table.groupAId} < ${table.groupBId}`,
+    ),
   ],
 );
 
