@@ -4,18 +4,25 @@ export interface User {
   id: string;
   privateUsername: string;
   passwordHash: string;
-  captchaVerified: boolean;
   createdAt: Date;
+}
+
+export interface Session {
+  id: string;
+  userId: string;
+  createdAt: Date;
+  lastActiveAt: Date;
+  expiresAt: Date;
 }
 
 export interface GroupProfile {
   id: string;
   userId: string;
   groupId: string;
-  publicUsername: string;
-  selfDescription: string;
-  profilePhotoUrl: string | null;
-  selfVouchText: string;
+  publicUsernameCiphertext: string; // E2EE: encrypted with group key
+  selfDescriptionCiphertext: string; // E2EE
+  profilePhotoCiphertext: string | null; // E2EE
+  selfVouchCiphertext: string; // E2EE
   createdAt: Date;
 }
 
@@ -23,9 +30,6 @@ export interface GroupProfile {
 
 export interface Group {
   id: string;
-  name: string;
-  principlesChatId: string;
-  settings: GroupSettings;
   createdAt: Date;
 }
 
@@ -58,7 +62,7 @@ export interface Vouch {
   groupId: string;
   judgmentType: 'binary' | 'degrees';
   judgmentValue: number;
-  reasoning: string;
+  reasoningCiphertext: string; // E2EE
   createdAt: Date;
 }
 
@@ -71,7 +75,6 @@ export interface Chat {
   groupId: string;
   type: ChatType;
   pairedChatId: string | null;
-  settings: ChatSettings;
   createdAt: Date;
 }
 
@@ -79,7 +82,7 @@ export interface Message {
   id: string;
   chatId: string;
   authorId: string;
-  ciphertext: string; // E2EE: encrypted content
+  ciphertext: string; // E2EE: all content encrypted
   createdAt: Date;
   parentMessageId: string | null;
 }
@@ -93,8 +96,8 @@ export interface Judgment {
   messageId: string;
   judgeId: string;
   type: JudgmentType;
-  value: number; // 0=down/1=up for binary; 1-10 for degrees
-  reasoning: string;
+  value: number; // 0/1 for binary; 1-10 for degrees. Plaintext for server scoring (see ADR-002).
+  reasoningCiphertext: string; // E2EE
   createdAt: Date;
 }
 
@@ -149,11 +152,13 @@ export interface FederationRelationship {
 export interface SharedChat {
   id: string;
   federationRelationshipId: string;
-  settings: ChatSettings;
   createdAt: Date;
 }
 
 // === Settings ===
+// Settings are stored as E2EE relay chat entries, not as plaintext columns.
+// Group and chat settings are resolved at the client from decrypted relay chat state.
+// The types below represent the decrypted client-side view.
 
 export interface ChatSettings {
   name: string;

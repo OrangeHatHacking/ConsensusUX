@@ -2,11 +2,13 @@
   "name": "@consensusux/web",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "echo \"next.js not installed yet\"",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "echo \"no source files yet\"",
+    "test": "echo \"no tests yet\""
   },
   "dependencies": {
     "@consensusux/core": "workspace:*"

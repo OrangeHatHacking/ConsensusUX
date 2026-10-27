@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "expo start",
-    "build": "expo build"
+    "build": "echo \"expo build not configured\"",
+    "lint": "echo \"no lint yet\"",
+    "test": "echo \"no tests yet\""
   },
   "dependencies": {
     "@consensusux/core": "workspace:*"

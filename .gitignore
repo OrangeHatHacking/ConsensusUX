@@ -9,3 +9,9 @@ dist/
 .env.*.local
 .DS_Store
 coverage/
+pnpm-debug.log*
+*.log
+nvim.log
+docs/adr-*.md
+CLAUDE.md
+packages/core/drizzle/meta/

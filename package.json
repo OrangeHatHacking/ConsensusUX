@@ -7,10 +7,29 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "test": "turbo test",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "check": "turbo lint test build",
+    "audit": "pnpm audit",
+    "db:generate": "pnpm --filter @consensusux/core exec drizzle-kit generate",
+    "db:migrate": "pnpm --filter @consensusux/core exec drizzle-kit migrate",
+    "db:studio": "pnpm --filter @consensusux/core exec drizzle-kit studio",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down"
   },
   "devDependencies": {
-    "turbo": "^2"
+    "turbo": "^2",
+    "typescript": "^5.7",
+    "eslint": "^9",
+    "prettier": "^3",
+    "@eslint/js": "^9",
+    "typescript-eslint": "^8",
+    "eslint-config-prettier": "^10"
   },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@10.34.9",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "argon2",
+      "@signalapp/libsignal-client"
+    ]
+  }
 }
